@@ -46,15 +46,7 @@ class GameState {
             grill: 1,
         };
         
-        // 已解锁的食材
-        this.unlockedIngredients = [];
-        
-        // 初始化默认解锁的食材
-        for (let key in CONFIG.ingredients) {
-            if (CONFIG.ingredients[key].unlocked) {
-                this.unlockedIngredients.push(key);
-            }
-        }
+        this.unlockedIngredients = Hooks.useDefaultUnlockedIngredients();
         
         // 统计数据
         this.stats = {
@@ -516,13 +508,7 @@ class GameState {
     }
     
     getDefaultUnlockedIngredients() {
-        const unlocked = [];
-        for (let key in CONFIG.ingredients) {
-            if (CONFIG.ingredients[key].unlocked) {
-                unlocked.push(key);
-            }
-        }
-        return unlocked;
+        return Hooks.useDefaultUnlockedIngredients();
     }
 }
 

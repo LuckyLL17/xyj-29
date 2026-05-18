@@ -170,18 +170,7 @@ class EffectsSystem {
             if (progress < 1) {
                 animationId = requestAnimationFrame(animate);
             } else {
-                // 动画完成后移除
-                setTimeout(() => {
-                    if (container.parentNode) {
-                        container.style.opacity = '0';
-                        container.style.transition = 'opacity 0.5s';
-                        setTimeout(() => {
-                            if (container.parentNode) {
-                                container.parentNode.removeChild(container);
-                            }
-                        }, 500);
-                    }
-                }, 300);
+                Hooks.useFadeOutRemove(container, 300, 500);
             }
         };
         
@@ -374,17 +363,7 @@ class EffectsSystem {
                     parent: container,
                 });
                 
-                setTimeout(() => {
-                    if (container.parentNode) {
-                        container.style.opacity = '0';
-                        container.style.transition = 'opacity 0.5s';
-                        setTimeout(() => {
-                            if (container.parentNode) {
-                                container.parentNode.removeChild(container);
-                            }
-                        }, 500);
-                    }
-                }, 500);
+                Hooks.useFadeOutRemove(container, 500, 500);
             }
         };
         
@@ -430,20 +409,9 @@ class EffectsSystem {
         element.innerHTML = `${emoji} ${text}`;
         
         this.effectLayer.appendChild(element);
-        
-        // 动画完成后移除
-        setTimeout(() => {
-            if (element.parentNode) {
-                element.style.opacity = '0';
-                element.style.transition = 'opacity 0.3s';
-                setTimeout(() => {
-                    if (element.parentNode) {
-                        element.parentNode.removeChild(element);
-                    }
-                }, 300);
-            }
-        }, 2000);
-        
+
+        Hooks.useFadeOutRemove(element, 2000, 300);
+
         return {
             type: 'drop',
             element: element,
@@ -635,26 +603,16 @@ class EffectsSystem {
         
         element.innerHTML = `✅ ${message}`;
         document.body.appendChild(element);
-        
-        // 播放闪烁特效
+
         this.playEffect('sparkle', {
             x: '50%',
             y: '50%',
             parent: document.body,
             count: 20,
         });
-        
-        // 2秒后移除
-        setTimeout(() => {
-            element.style.opacity = '0';
-            element.style.transition = 'opacity 0.5s';
-            setTimeout(() => {
-                if (element.parentNode) {
-                    element.parentNode.removeChild(element);
-                }
-            }, 500);
-        }, 2000);
-        
+
+        Hooks.useFadeOutRemove(element, 2000, 500);
+
         return {
             type: 'success',
             element: element,
@@ -697,18 +655,9 @@ class EffectsSystem {
         
         element.innerHTML = `❌ ${message}`;
         document.body.appendChild(element);
-        
-        // 2秒后移除
-        setTimeout(() => {
-            element.style.opacity = '0';
-            element.style.transition = 'opacity 0.5s';
-            setTimeout(() => {
-                if (element.parentNode) {
-                    element.parentNode.removeChild(element);
-                }
-            }, 500);
-        }, 2000);
-        
+
+        Hooks.useFadeOutRemove(element, 2000, 500);
+
         return {
             type: 'error',
             element: element,
