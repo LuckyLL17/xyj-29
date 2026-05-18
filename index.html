@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>汉堡工坊 - 3D模拟经营游戏</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/loaders/GLTFLoader.js"></script>
+</head>
+<body>
+    <div id="game-container">
+        <div id="ui-container">
+            <!-- 顶部状态栏 -->
+            <div id="top-bar">
+                <div id="coins-display">
+                    <span class="coin-icon">💰</span>
+                    <span id="coins">100</span>
+                </div>
+                <div id="level-display">
+                    <span class="level-icon">🏪</span>
+                    <span>等级: <span id="level">1</span></span>
+                    <div id="level-progress-container">
+                        <div class="level-progress-bar">
+                            <div class="level-progress-fill" id="level-progress"></div>
+                        </div>
+                        <span class="level-progress-text" id="level-progress-text">0/500</span>
+                    </div>
+                </div>
+                <div id="shop-btn">
+                    <span>商店</span>
+                </div>
+            </div>
+
+            <!-- 顾客队列 -->
+            <div id="customers-queue">
+                <div class="customer-slot" id="customer-1">
+                    <div class="customer-icon">👤</div>
+                    <div class="order-display"></div>
+                    <div class="timer-bar">
+                        <div class="timer-fill"></div>
+                    </div>
+                </div>
+                <div class="customer-slot" id="customer-2">
+                    <div class="customer-icon">👤</div>
+                    <div class="order-display"></div>
+                    <div class="timer-bar">
+                        <div class="timer-fill"></div>
+                    </div>
+                </div>
+                <div class="customer-slot" id="customer-3">
+                    <div class="customer-icon">👤</div>
+                    <div class="order-display"></div>
+                    <div class="timer-bar">
+                        <div class="timer-fill"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 当前选中的订单 -->
+            <div id="current-order" style="display: none;">
+                <div class="order-title">当前订单</div>
+                <div id="order-details"></div>
+                <button id="deliver-order">交付订单</button>
+            </div>
+
+            <!-- 制作区 -->
+            <div id="crafting-area">
+                <div class="crafting-title">制作区</div>
+                <div id="burger-stack">
+                    <!-- 堆叠的食材会在这里显示 -->
+                </div>
+                <div id="crafting-progress">
+                    <div class="progress-bar">
+                        <div class="progress-fill"></div>
+                    </div>
+                    <div class="progress-text">制作中...</div>
+                </div>
+                <div id="crafting-buttons" style="display: none;">
+                    <button id="undo-ingredient" class="crafting-btn">↩️ 撤销</button>
+                    <button id="complete-burger" class="crafting-btn primary">✅ 完成汉堡</button>
+                </div>
+            </div>
+
+            <!-- 食材选择区 -->
+            <div id="ingredients-panel">
+                <div class="panel-title">食材</div>
+                <div id="ingredients-list">
+                    <!-- 食材会在这里动态生成 -->
+                </div>
+            </div>
+
+            <!-- 饮料机 -->
+            <div id="drink-machine">
+                <div class="machine-title">饮料机</div>
+                <div class="drink-buttons">
+                    <button class="drink-btn" data-drink="cola">🥤 可乐</button>
+                    <button class="drink-btn" data-drink="orange">🍊 橙汁</button>
+                </div>
+                <div id="pouring-animation" style="display: none;">
+                    <div class="pouring-liquid"></div>
+                </div>
+            </div>
+
+            <!-- 薯条机 -->
+            <div id="fryer">
+                <div class="machine-title">炸锅</div>
+                <button id="fry-fries">🍟 炸薯条</button>
+                <div id="frying-progress" style="display: none;">
+                    <div class="progress-bar">
+                        <div class="progress-fill"></div>
+                    </div>
+                    <div class="progress-text">炸制中...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3D场景容器 -->
+        <div id="three-container"></div>
+
+        <!-- 商店弹窗 -->
+        <div id="shop-modal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <span class="close-btn">&times;</span>
+                <h2>商店</h2>
+                <div class="shop-tabs">
+                    <button class="tab-btn active" data-tab="ingredients">解锁食材</button>
+                    <button class="tab-btn" data-tab="equipment">升级设备</button>
+                </div>
+                <div class="tab-content" id="ingredients-tab">
+                    <!-- 食材解锁列表 -->
+                </div>
+                <div class="tab-content" id="equipment-tab" style="display: none;">
+                    <!-- 设备升级列表 -->
+                </div>
+            </div>
+        </div>
+
+        <!-- 游戏开始界面 -->
+        <div id="start-screen">
+            <div class="start-content">
+                <h1>🍔 汉堡工坊</h1>
+                <p>3D模拟经营游戏</p>
+                <button id="start-btn">开始游戏</button>
+                <button id="tutorial-btn">教程</button>
+            </div>
+        </div>
+
+        <!-- 教程界面 -->
+        <div id="tutorial-screen" style="display: none;">
+            <div class="tutorial-content">
+                <h2>游戏教程</h2>
+                <div class="tutorial-steps">
+                    <div class="tutorial-step active" data-step="1">
+                        <h3>1. 接待顾客</h3>
+                        <p>顾客会排队等待，点击顾客查看他们的订单。一次最多可以接待3位顾客。</p>
+                    </div>
+                    <div class="tutorial-step" data-step="2">
+                        <h3>2. 制作食物</h3>
+                        <p>根据订单要求制作汉堡、饮料或薯条。汉堡需要按照正确的顺序堆叠配料。</p>
+                    </div>
+                    <div class="tutorial-step" data-step="3">
+                        <h3>3. 完成订单</h3>
+                        <p>制作完成后点击"交付订单"完成交易。如果做错了，顾客会不满意并扣除金币。</p>
+                    </div>
+                    <div class="tutorial-step" data-step="4">
+                        <h3>4. 升级店铺</h3>
+                        <p>使用金币解锁新食材、升级设备，提升店铺等级，吸引更多顾客！</p>
+                    </div>
+                </div>
+                <div class="tutorial-nav">
+                    <button id="prev-tutorial">上一步</button>
+                    <button id="next-tutorial">下一步</button>
+                    <button id="skip-tutorial">跳过</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 游戏暂停/结束界面 -->
+        <div id="pause-screen" style="display: none;">
+            <div class="pause-content">
+                <h2>游戏暂停</h2>
+                <button id="resume-btn">继续游戏</button>
+                <button id="quit-btn">退出游戏</button>
+            </div>
+        </div>
+
+        <!-- 通知消息 -->
+        <div id="notifications"></div>
+    </div>
+
+    <script src="config.js"></script>
+    <script src="gameState.js"></script>
+    <script src="uiManager.js"></script>
+    <script src="scene3D.js"></script>
+    <script src="customerSystem.js"></script>
+    <script src="orderSystem.js"></script>
+    <script src="craftingSystem.js"></script>
+    <script src="effectsSystem.js"></script>
+    <script src="shopSystem.js"></script>
+    <script src="saveSystem.js"></script>
+    <script src="game.js"></script>
+</body>
+</html>
