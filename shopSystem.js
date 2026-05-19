@@ -1,6 +1,10 @@
 // 商店系统
 class ShopSystem {
     constructor() {
+        // 使用公共Hooks
+        this.domHook = Hooks.useDOM();
+        this.configHook = Hooks.useConfig();
+        this.notifyHook = Hooks.useNotification();
         this.initEventListeners();
     }
     
@@ -123,8 +127,9 @@ class ShopSystem {
     
     // 创建商店物品
     createShopItem(data) {
-        const div = document.createElement('div');
-        div.className = `shop-item ${data.isUnlocked ? 'owned' : ''}`;
+        const div = this.domHook.createElement('div', {
+            className: `shop-item ${data.isUnlocked ? 'owned' : ''}`
+        });
         
         if (data.type === 'ingredient') {
             div.innerHTML = `
@@ -180,18 +185,18 @@ class ShopSystem {
     
     // 购买食材
     buyIngredient(ingredientId) {
-        const ingredient = CONFIG.ingredients[ingredientId];
+        const ingredient = this.configHook.getIngredient(ingredientId);
         if (!ingredient) return;
         
         // 检查是否已解锁
         if (gameState.unlockedIngredients.includes(ingredientId)) {
-            uiManager.showNotification('该食材已经解锁了！', 'warning');
+            this.notifyHook.warning('该食材已经解锁了！');
             return;
         }
         
         // 检查金币
         if (gameState.coins < ingredient.price) {
-            uiManager.showNotification('金币不足！', 'error');
+            this.notifyHook.error('金币不足！');
             return;
         }
         
@@ -208,10 +213,7 @@ class ShopSystem {
             
             effectsSystem.playSound('coin');
             
-            uiManager.showNotification(
-                `🎉 解锁新食材：${ingredient.name}！`,
-                'success'
-            );
+            this.notifyHook.success(`🎉 解锁新食材：${ingredient.name}！`);
             
             // 更新UI
             this.updateShopUI();
@@ -221,7 +223,7 @@ class ShopSystem {
     
     // 升级设备
     upgradeEquipment(equipmentId) {
-        const equipment = CONFIG.equipment[equipmentId];
+        const equipment = this.configHook.getEquipment(equipmentId);
         if (!equipment) return;
         
         const currentLevel = gameState.equipmentLevels[equipmentId];
@@ -229,7 +231,7 @@ class ShopSystem {
         
         // 检查是否已满级
         if (nextLevel > equipment.levels.length) {
-            uiManager.showNotification('设备已经满级了！', 'warning');
+            this.notifyHook.warning('设备已经满级了！');
             return;
         }
         
@@ -237,7 +239,7 @@ class ShopSystem {
         
         // 检查金币
         if (gameState.coins < nextLevelData.price) {
-            uiManager.showNotification('金币不足！', 'error');
+            this.notifyHook.error('金币不足！');
             return;
         }
         
@@ -254,10 +256,7 @@ class ShopSystem {
             
             effectsSystem.playSound('success');
             
-            uiManager.showNotification(
-                `🔧 ${equipment.name} 升级到 ${nextLevel} 级！速度提升！`,
-                'success'
-            );
+            this.notifyHook.success(`🔧 ${equipment.name} 升级到 ${nextLevel} 级！速度提升！`);
             
             // 更新UI
             this.updateShopUI();

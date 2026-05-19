@@ -1,6 +1,12 @@
 // 游戏状态管理
 class GameState {
     constructor() {
+        // 使用公共事件发射器Hook管理事件系统
+        this.eventEmitter = Hooks.useEventEmitter();
+        this.on = this.eventEmitter.on.bind(this.eventEmitter);
+        this.emit = this.eventEmitter.emit.bind(this.eventEmitter);
+        this.off = this.eventEmitter.off.bind(this.eventEmitter);
+        this.once = this.eventEmitter.once.bind(this.eventEmitter);
         this.reset();
     }
     
@@ -66,24 +72,6 @@ class GameState {
             totalCoinsEarned: 0,
             totalCoinsLost: 0,
         };
-        
-        // 事件系统
-        this.listeners = {};
-    }
-    
-    // 事件监听
-    on(event, callback) {
-        if (!this.listeners[event]) {
-            this.listeners[event] = [];
-        }
-        this.listeners[event].push(callback);
-    }
-    
-    // 触发事件
-    emit(event, data) {
-        if (this.listeners[event]) {
-            this.listeners[event].forEach(callback => callback(data));
-        }
     }
     
     // 金币操作

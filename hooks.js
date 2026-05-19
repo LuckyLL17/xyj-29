@@ -223,6 +223,7 @@ function useDOM() {
      * @param {Object} options.style - 样式对象
      * @param {string} options.className - 类名
      * @param {string} options.innerHTML - 内部HTML
+     * @param {string} options.textContent - 文本内容
      * @param {HTMLElement} options.parent - 父元素
      * @param {Object} options.dataset - 数据属性
      * @returns {HTMLElement} 创建的元素
@@ -240,6 +241,10 @@ function useDOM() {
 
         if (options.innerHTML !== undefined) {
             element.innerHTML = options.innerHTML;
+        }
+
+        if (options.textContent !== undefined) {
+            element.textContent = options.textContent;
         }
 
         if (options.dataset) {
