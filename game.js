@@ -58,10 +58,7 @@ class Game {
         
         // 监听顾客离开
         gameState.on('customerRemoved', (data) => {
-            // 移除3D模型（容错处理）
-            if (typeof scene3D !== 'undefined' && scene3D.removeCustomerModel) {
-                scene3D.removeCustomerModel(data.index);
-            }
+            Hooks.useSafeScene3D('removeCustomerModel', data.index);
         });
     }
     
@@ -151,10 +148,7 @@ class Game {
         if (added) {
             const index = gameState.customers.length - 1;
             
-            // 创建3D模型（容错处理）
-            if (typeof scene3D !== 'undefined' && scene3D.createCustomerModel) {
-                scene3D.createCustomerModel(index);
-            }
+            Hooks.useSafeScene3D('createCustomerModel', index);
             
             // 显示通知
             uiManager.showNotification(
@@ -236,10 +230,7 @@ class Game {
         // 清空顾客队列
         while (gameState.customers.length > 0) {
             const index = gameState.customers.length - 1;
-            // 移除3D模型（容错处理）
-            if (typeof scene3D !== 'undefined' && scene3D.removeCustomerModel) {
-                scene3D.removeCustomerModel(index);
-            }
+            Hooks.useSafeScene3D('removeCustomerModel', index);
             gameState.removeCustomer(index);
         }
         

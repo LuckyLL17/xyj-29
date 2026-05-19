@@ -416,11 +416,8 @@ class UIManager {
     
     // 撤销最后一个食材
     undoIngredient() {
-        if (gameState.isCrafting) {
-            this.showNotification('⚠️ 请等待当前制作完成', 'warning');
-            return;
-        }
-        
+        if (Hooks.useCraftingGuard()) return;
+
         const ingredient = gameState.removeLastIngredient();
         if (ingredient) {
             const ingredientName = CONFIG.ingredients[ingredient]?.name || ingredient;
@@ -434,11 +431,8 @@ class UIManager {
     
     // 完成汉堡
     completeBurger() {
-        if (gameState.isCrafting) {
-            this.showNotification('⚠️ 请等待当前制作完成', 'warning');
-            return;
-        }
-        
+        if (Hooks.useCraftingGuard()) return;
+
         if (gameState.burgerStack.length === 0) {
             this.showNotification('⚠️ 汉堡为空，无法完成', 'warning');
             return;
@@ -478,37 +472,26 @@ class UIManager {
     
     // 制作饮料
     makeDrink(drinkId) {
-        if (gameState.isCrafting) {
-            this.showNotification('⚠️ 请等待当前制作完成', 'warning');
-            return;
-        }
-        
+        if (Hooks.useCraftingGuard()) return;
+
         const speed = gameState.getEquipmentSpeed('drinkMachine');
         const makeTime = CONFIG.drinks[drinkId].makeTime * speed;
-        
+
         gameState.isCrafting = true;
         gameState.currentCraftingItem = { type: 'drink', id: drinkId };
-        
-        // 显示倒饮料动画
+
         this.showPouringAnimation(drinkId);
-        
-        // 显示进度
+
         this.craftingProgress.style.display = 'block';
         this.craftingProgressText.textContent = `正在制作${CONFIG.drinks[drinkId].name}...`;
-        
-        let progress = 0;
-        const interval = 50;
-        const totalSteps = makeTime / interval;
-        
-        const timer = setInterval(() => {
-            progress += 100 / totalSteps;
-            this.craftingProgressBar.style.width = `${Math.min(progress, 100)}%`;
-            
-            if (progress >= 100) {
-                clearInterval(timer);
-                this.finishDrink(drinkId);
-            }
-        }, interval);
+
+        Hooks.useCraftingTimer(
+            makeTime,
+            (progress) => {
+                this.craftingProgressBar.style.width = `${progress}%`;
+            },
+            () => this.finishDrink(drinkId)
+        );
     }
     
     showPouringAnimation(drinkId) {
@@ -544,40 +527,30 @@ class UIManager {
     
     // 炸薯条
     makeFries() {
-        if (gameState.isCrafting) {
-            this.showNotification('⚠️ 请等待当前制作完成', 'warning');
-            return;
-        }
-        
+        if (Hooks.useCraftingGuard()) return;
+
         if (gameState.completedItems.fries) {
             this.showNotification('⚠️ 薯条已经炸好了', 'warning');
             return;
         }
-        
+
         const speed = gameState.getEquipmentSpeed('fryer');
         const makeTime = CONFIG.fries.makeTime * speed;
-        
+
         gameState.isCrafting = true;
         gameState.currentCraftingItem = { type: 'fries' };
-        
-        // 显示进度
+
         this.fryingProgress.style.display = 'block';
         this.fryingProgressText.textContent = '正在炸薯条...';
         this.fryBtn.disabled = true;
-        
-        let progress = 0;
-        const interval = 50;
-        const totalSteps = makeTime / interval;
-        
-        const timer = setInterval(() => {
-            progress += 100 / totalSteps;
-            this.fryingProgressBar.style.width = `${Math.min(progress, 100)}%`;
-            
-            if (progress >= 100) {
-                clearInterval(timer);
-                this.finishFries();
-            }
-        }, interval);
+
+        Hooks.useCraftingTimer(
+            makeTime,
+            (progress) => {
+                this.fryingProgressBar.style.width = `${progress}%`;
+            },
+            () => this.finishFries()
+        );
     }
     
     finishFries() {
@@ -608,45 +581,35 @@ class UIManager {
     }
     
     addIngredient(ingredientId) {
-        if (gameState.isCrafting) {
-            this.showNotification('⚠️ 请等待当前制作完成', 'warning');
-            return;
-        }
-        
+        if (Hooks.useCraftingGuard()) return;
+
         if (!gameState.currentOrder) {
             this.showNotification('⚠️ 请先选择一个订单', 'warning');
             return;
         }
-        
+
         if (gameState.completedItems.burger) {
             this.showNotification('⚠️ 汉堡已完成，无需再添加配料', 'warning');
             return;
         }
-        
+
         const ingredient = CONFIG.ingredients[ingredientId];
         const speed = gameState.getEquipmentSpeed('grill');
         const makeTime = ingredient.makeTime * speed;
-        
+
         gameState.isCrafting = true;
         gameState.currentCraftingItem = { type: 'ingredient', id: ingredientId };
-        
-        // 显示进度
+
         this.craftingProgress.style.display = 'block';
         this.craftingProgressText.textContent = `正在准备${ingredient.name}...`;
-        
-        let progress = 0;
-        const interval = 50;
-        const totalSteps = makeTime / interval;
-        
-        const timer = setInterval(() => {
-            progress += 100 / totalSteps;
-            this.craftingProgressBar.style.width = `${Math.min(progress, 100)}%`;
-            
-            if (progress >= 100) {
-                clearInterval(timer);
-                this.finishIngredient(ingredientId);
-            }
-        }, interval);
+
+        Hooks.useCraftingTimer(
+            makeTime,
+            (progress) => {
+                this.craftingProgressBar.style.width = `${progress}%`;
+            },
+            () => this.finishIngredient(ingredientId)
+        );
     }
     
     finishIngredient(ingredientId) {
@@ -693,24 +656,27 @@ class UIManager {
     
     updateIngredientsShop() {
         this.ingredientsTab.innerHTML = '';
-        
+
         for (let id in CONFIG.ingredients) {
             const ingredient = CONFIG.ingredients[id];
-            if (ingredient.price === 0) continue; // 跳过免费食材
-            
+            if (ingredient.price === 0) continue;
+
             const isUnlocked = gameState.unlockedIngredients.includes(id);
             const canAfford = gameState.coins >= ingredient.price;
-            
+
             const div = document.createElement('div');
             div.className = `shop-item ${isUnlocked ? 'owned' : ''}`;
-            div.innerHTML = `
-                <h4>${ingredient.emoji} ${ingredient.name}</h4>
-                <p>${isUnlocked ? '已解锁' : `${ingredient.price} 金币`}</p>
-                <button ${isUnlocked || !canAfford ? 'disabled' : ''} data-ingredient="${id}">
-                    ${isUnlocked ? '已拥有' : '解锁'}
-                </button>
-            `;
-            
+            div.innerHTML = Hooks.useShopItemHTML({
+                id: id,
+                type: 'ingredient',
+                name: ingredient.name,
+                emoji: ingredient.emoji,
+                price: ingredient.price,
+                isUnlocked: isUnlocked,
+                canAfford: canAfford,
+                description: `解锁后可以在汉堡中使用${ingredient.name}`,
+            });
+
             if (!isUnlocked && canAfford) {
                 const btn = div.querySelector('button');
                 btn.addEventListener('click', () => {
@@ -719,41 +685,47 @@ class UIManager {
                     }
                 });
             }
-            
+
             this.ingredientsTab.appendChild(div);
         }
     }
     
     updateEquipmentShop() {
         this.equipmentTab.innerHTML = '';
-        
+
         for (let id in CONFIG.equipment) {
             const equipment = CONFIG.equipment[id];
             const currentLevel = gameState.equipmentLevels[id];
             const nextLevel = currentLevel + 1;
-            
+
             let nextLevelData = null;
-            if (nextLevel <= equipment.levels.length) {
+            let isMaxLevel = false;
+
+            if (nextLevel > equipment.levels.length) {
+                isMaxLevel = true;
+            } else {
                 nextLevelData = equipment.levels[nextLevel - 1];
             }
-            
-            const canUpgrade = nextLevelData !== null && gameState.coins >= nextLevelData.price;
-            const speedMultiplier = equipment.levels[currentLevel - 1].speedMultiplier;
-            
+
+            const currentLevelData = equipment.levels[currentLevel - 1];
+            const canUpgrade = !isMaxLevel && gameState.coins >= (nextLevelData?.price || 0);
+
             const div = document.createElement('div');
             div.className = 'shop-item';
-            div.innerHTML = `
-                <h4>${equipment.name}</h4>
-                <p>当前等级: ${currentLevel}</p>
-                <p>速度倍率: ${speedMultiplier}x</p>
-                ${nextLevelData ? `
-                    <p>升级价格: ${nextLevelData.price} 金币</p>
-                    <button ${!canUpgrade ? 'disabled' : ''} data-equipment="${id}">
-                        升级到 ${nextLevel} 级
-                    </button>
-                ` : '<p style="color: #4CAF50;">已满级</p>'}
-            `;
-            
+            div.innerHTML = Hooks.useShopItemHTML({
+                id: id,
+                type: 'equipment',
+                name: equipment.name,
+                emoji: shopSystem.getEquipmentEmoji(id),
+                price: isMaxLevel ? 0 : (nextLevelData?.price || 0),
+                isUnlocked: isMaxLevel,
+                canAfford: canUpgrade,
+                currentLevel: currentLevel,
+                maxLevel: equipment.levels.length,
+                speedMultiplier: currentLevelData.speedMultiplier,
+                isMaxLevel: isMaxLevel,
+            });
+
             if (canUpgrade) {
                 const btn = div.querySelector('button');
                 btn.addEventListener('click', () => {
@@ -762,7 +734,7 @@ class UIManager {
                     }
                 });
             }
-            
+
             this.equipmentTab.appendChild(div);
         }
     }
