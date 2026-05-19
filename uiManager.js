@@ -304,19 +304,11 @@ class UIManager {
     }
     
     highlightSelectedCustomer(index) {
-        this.customerSlots.forEach((slot, i) => {
-            if (i === index) {
-                slot.classList.add('active');
-            } else {
-                slot.classList.remove('active');
-            }
-        });
+        commonHooks.useHighlightIndex(this.customerSlots, index);
     }
     
     clearHighlights() {
-        this.customerSlots.forEach(slot => {
-            slot.classList.remove('active');
-        });
+        commonHooks.useClearHighlights(this.customerSlots);
     }
     
     selectCustomer(index) {
@@ -478,13 +470,12 @@ class UIManager {
     
     // 制作饮料
     makeDrink(drinkId) {
-        if (gameState.isCrafting) {
-            this.showNotification('⚠️ 请等待当前制作完成', 'warning');
+        if (commonHooks.useIsCrafting()) {
+            commonHooks.useNotifyCrafting();
             return;
         }
         
-        const speed = gameState.getEquipmentSpeed('drinkMachine');
-        const makeTime = CONFIG.drinks[drinkId].makeTime * speed;
+        const makeTime = commonHooks.useMakeTime(CONFIG.drinks[drinkId].makeTime, 'drinkMachine');
         
         gameState.isCrafting = true;
         gameState.currentCraftingItem = { type: 'drink', id: drinkId };
@@ -493,22 +484,15 @@ class UIManager {
         this.showPouringAnimation(drinkId);
         
         // 显示进度
-        this.craftingProgress.style.display = 'block';
         this.craftingProgressText.textContent = `正在制作${CONFIG.drinks[drinkId].name}...`;
-        
-        let progress = 0;
-        const interval = 50;
-        const totalSteps = makeTime / interval;
-        
-        const timer = setInterval(() => {
-            progress += 100 / totalSteps;
-            this.craftingProgressBar.style.width = `${Math.min(progress, 100)}%`;
-            
-            if (progress >= 100) {
-                clearInterval(timer);
-                this.finishDrink(drinkId);
-            }
-        }, interval);
+        commonHooks.useProgressBar(
+            this.craftingProgressBar,
+            this.craftingProgressText,
+            this.craftingProgress,
+            makeTime,
+            null,
+            () => this.finishDrink(drinkId)
+        );
     }
     
     showPouringAnimation(drinkId) {
@@ -544,8 +528,8 @@ class UIManager {
     
     // 炸薯条
     makeFries() {
-        if (gameState.isCrafting) {
-            this.showNotification('⚠️ 请等待当前制作完成', 'warning');
+        if (commonHooks.useIsCrafting()) {
+            commonHooks.useNotifyCrafting();
             return;
         }
         
@@ -554,30 +538,22 @@ class UIManager {
             return;
         }
         
-        const speed = gameState.getEquipmentSpeed('fryer');
-        const makeTime = CONFIG.fries.makeTime * speed;
+        const makeTime = commonHooks.useMakeTime(CONFIG.fries.makeTime, 'fryer');
         
         gameState.isCrafting = true;
         gameState.currentCraftingItem = { type: 'fries' };
         
         // 显示进度
-        this.fryingProgress.style.display = 'block';
         this.fryingProgressText.textContent = '正在炸薯条...';
         this.fryBtn.disabled = true;
-        
-        let progress = 0;
-        const interval = 50;
-        const totalSteps = makeTime / interval;
-        
-        const timer = setInterval(() => {
-            progress += 100 / totalSteps;
-            this.fryingProgressBar.style.width = `${Math.min(progress, 100)}%`;
-            
-            if (progress >= 100) {
-                clearInterval(timer);
-                this.finishFries();
-            }
-        }, interval);
+        commonHooks.useProgressBar(
+            this.fryingProgressBar,
+            this.fryingProgressText,
+            this.fryingProgress,
+            makeTime,
+            null,
+            () => this.finishFries()
+        );
     }
     
     finishFries() {
@@ -608,8 +584,8 @@ class UIManager {
     }
     
     addIngredient(ingredientId) {
-        if (gameState.isCrafting) {
-            this.showNotification('⚠️ 请等待当前制作完成', 'warning');
+        if (commonHooks.useIsCrafting()) {
+            commonHooks.useNotifyCrafting();
             return;
         }
         
@@ -624,29 +600,21 @@ class UIManager {
         }
         
         const ingredient = CONFIG.ingredients[ingredientId];
-        const speed = gameState.getEquipmentSpeed('grill');
-        const makeTime = ingredient.makeTime * speed;
+        const makeTime = commonHooks.useMakeTime(ingredient.makeTime, 'grill');
         
         gameState.isCrafting = true;
         gameState.currentCraftingItem = { type: 'ingredient', id: ingredientId };
         
         // 显示进度
-        this.craftingProgress.style.display = 'block';
         this.craftingProgressText.textContent = `正在准备${ingredient.name}...`;
-        
-        let progress = 0;
-        const interval = 50;
-        const totalSteps = makeTime / interval;
-        
-        const timer = setInterval(() => {
-            progress += 100 / totalSteps;
-            this.craftingProgressBar.style.width = `${Math.min(progress, 100)}%`;
-            
-            if (progress >= 100) {
-                clearInterval(timer);
-                this.finishIngredient(ingredientId);
-            }
-        }, interval);
+        commonHooks.useProgressBar(
+            this.craftingProgressBar,
+            this.craftingProgressText,
+            this.craftingProgress,
+            makeTime,
+            null,
+            () => this.finishIngredient(ingredientId)
+        );
     }
     
     finishIngredient(ingredientId) {
@@ -669,21 +637,13 @@ class UIManager {
     }
     
     switchTab(tabId) {
-        this.tabBtns.forEach(btn => {
-            if (btn.dataset.tab === tabId) {
-                btn.classList.add('active');
-            } else {
-                btn.classList.remove('active');
-            }
-        });
-        
-        if (tabId === 'ingredients') {
-            this.ingredientsTab.style.display = 'grid';
-            this.equipmentTab.style.display = 'none';
-        } else {
-            this.ingredientsTab.style.display = 'none';
-            this.equipmentTab.style.display = 'grid';
-        }
+        commonHooks.useSwitchTab(
+            this.tabBtns,
+            tabId,
+            this.ingredientsTab,
+            this.equipmentTab,
+            'ingredients'
+        );
     }
     
     updateShop() {
