@@ -212,8 +212,8 @@ class CraftingSystem {
                 
             case 'drink':
                 if (order.items.drinks) {
-                    const needed = order.items.drinks.filter(d => d === itemId).length;
-                    const made = gameState.completedItems.drinks.filter(d => d === itemId).length;
+                    const needed = commonHooks.useCountInArray(order.items.drinks, itemId);
+                    const made = commonHooks.useCountInArray(gameState.completedItems.drinks, itemId);
                     if (made >= needed) {
                         return { canCraft: false, reason: `${CONFIG.drinks[itemId].name} 已经足够了` };
                     }
