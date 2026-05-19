@@ -1,6 +1,10 @@
 // 顾客系统
 class CustomerSystem {
     constructor() {
+        // 使用公共Hooks
+        this.arrayHook = Hooks.useArray();
+        this.configHook = Hooks.useConfig();
+        this.notifyHook = Hooks.useNotification();
         this.customerIdCounter = 0;
     }
     
@@ -8,11 +12,11 @@ class CustomerSystem {
     generateCustomer() {
         // 随机选择顾客类型
         const customerTypes = CONFIG.customers.types;
-        const type = customerTypes[Math.floor(Math.random() * customerTypes.length)];
+        const type = this.arrayHook.random(customerTypes);
         
         // 随机选择图标
         const icons = CONFIG.customers.icons;
-        const icon = icons[Math.floor(Math.random() * icons.length)];
+        const icon = this.arrayHook.random(icons);
         
         // 生成订单
         const order = this.generateOrder();
@@ -61,7 +65,7 @@ class CustomerSystem {
         
         // 随机选择其他类型
         for (let i = 1; i < itemCount; i++) {
-            const type = availableTypes[Math.floor(Math.random() * availableTypes.length)];
+            const type = this.arrayHook.random(availableTypes);
             selectedTypes.push(type);
         }
         
@@ -124,7 +128,7 @@ class CustomerSystem {
         }
         
         // 随机选择汉堡类型
-        const selectedType = availableTypes[Math.floor(Math.random() * availableTypes.length)];
+        const selectedType = this.arrayHook.random(availableTypes);
         const burgerConfig = CONFIG.burgerTypes[selectedType];
         
         // 随机决定是否排除某些配料（不要生菜、不要酱等）
@@ -159,8 +163,8 @@ class CustomerSystem {
     // 生成饮料订单
     generateDrinkOrder() {
         const drinkTypes = Object.keys(CONFIG.drinks);
-        const selectedType = drinkTypes[Math.floor(Math.random() * drinkTypes.length)];
-        const drinkConfig = CONFIG.drinks[selectedType];
+        const selectedType = this.arrayHook.random(drinkTypes);
+        const drinkConfig = this.configHook.getDrink(selectedType);
         
         return {
             id: selectedType,
@@ -192,9 +196,8 @@ class CustomerSystem {
         scene3D.removeCustomerModel(index);
         
         // 显示通知
-        uiManager.showNotification(
-            `😢 顾客等待太久离开了！扣除 ${CONFIG.penalties.customerLeave} 金币`,
-            'error'
+        this.notifyHook.error(
+            `😢 顾客等待太久离开了！扣除 ${CONFIG.penalties.customerLeave} 金币`
         );
     }
 }
